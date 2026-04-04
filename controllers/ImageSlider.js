@@ -6,9 +6,9 @@ import Image from "../models/ImageSlider.js";
  */
 export const createImage = async (req, res) => {
   try {
-    const { heading, description, image } = req.body;
+    const { heading, description } = req.body;
 
-    if (!heading || !description || !image) {
+    if (!heading || !description || !req.file) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -18,15 +18,9 @@ export const createImage = async (req, res) => {
     const newImage = await Image.create({
       heading,
       description,
-      image,
+      image: req.file.filename, // 👈 file saved here
     });
 
-    if(!newImage){
-        return res.status(400).json({
-            success:false,
-            massage:"Image Not Created",
-        })
-    }
     res.status(201).json({
       success: true,
       message: "Image created successfully",

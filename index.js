@@ -1,28 +1,46 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import db from './config/db.js';
-import ImageRoute from './routes/ImageRoute.js'
+import express from "express";
+import dotenv from "dotenv";
+import path from "path";
+
+import db from "./config/db.js";
+import ImageRoute from "./routes/ImageRoute.js";
+import EventRoute from "./routes/EventRoute.js";
+import ImageRoutes from "./routes/ImageRoutes.js";
+import AnoutRoute from "./routes/AboutRoute.js";
+
+// ✅ Load env first
 dotenv.config();
 
+// ✅ Create app FIRST
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// ✅ Middleware
 app.use(express.json());
 
-app.use('/api',ImageRoute);
-// Test route
-app.get('/', (req, res) => {
-    res.send('API Running 🚀');
+// ✅ Static folder for images
+app.use("/uploads", express.static("uploads"));
+
+// ✅ Routes
+app.use("/api/images", ImageRoute);
+app.use("/api/events", EventRoute);
+app.use("/api/imageRoutes", ImageRoutes);
+app.use("/api/about", AnoutRoute);
+
+
+
+// ✅ Test route
+app.get("/", (req, res) => {
+  res.send("API Running 🚀");
 });
 
-// Connect to DB first, then start server
+// ✅ Start server after DB connection
 db()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   })
-  .catch(err => {
-    console.error("Failed to connect to DB", err);
+  .catch((err) => {
+    console.error("DB connection failed:", err);
   });

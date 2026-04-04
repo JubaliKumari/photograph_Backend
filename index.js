@@ -26,7 +26,7 @@ app.use("/api/images", ImageRoute);
 app.use("/api/events", EventRoute);
 app.use("/api/imageRoutes", ImageRoutes);
 app.use("/api/about", AnoutRoute);
-
+app.use("/api/users", userRoutes);
 
 
 // ✅ Test route

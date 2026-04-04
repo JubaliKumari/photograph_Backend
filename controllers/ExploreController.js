@@ -1,5 +1,8 @@
 import Event from "../models/Event.js";
-// CREATE EVENT
+import fs from "fs";
+
+
+// ✅ CREATE EVENT
 export const createEvent = async (req, res) => {
   try {
     const { heading } = req.body;
@@ -12,40 +15,70 @@ export const createEvent = async (req, res) => {
     }
 
     const event = await Event.create({
-      heading,
-      image: req.file.filename,
+      heading: heading.trim(),
+      image: `/uploads/${req.file.filename}`, // better path
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
+      message: "Event created successfully",
       data: event,
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-// GET ALL EVENTS
+
+
+// ✅ GET ALL EVENTS (with optional pagination)
 export const getEvents = async (req, res) => {
   try {
+    let { page, limit } = req.query;
+
+    if (page && limit) {
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      const events = await Event.find()
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      const total = await Event.countDocuments();
+
+      return res.status(200).json({
+        success: true,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        data: events,
+      });
+    }
+
+    // fallback: return all
     const events = await Event.find().sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: events,
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-// DELETE EVENT
+
+
+// ❌ DELETE EVENT (with image cleanup)
 export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -57,14 +90,24 @@ export const deleteEvent = async (req, res) => {
       });
     }
 
+    // 🧹 delete image file (optional but good)
+    if (event.image) {
+      try {
+        fs.unlinkSync(`.${event.image}`);
+      } catch (err) {
+        console.log("Image delete failed:", err.message);
+      }
+    }
+
     await event.deleteOne();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Event deleted successfully",
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

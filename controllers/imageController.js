@@ -1,6 +1,8 @@
 import Image from "../models/Image.js";
+import fs from "fs";
 
-// UPLOAD IMAGE
+
+// 📤 UPLOAD IMAGE
 export const uploadImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -11,57 +13,98 @@ export const uploadImage = async (req, res) => {
     }
 
     const newImage = await Image.create({
-      image: req.file.path,
+      image: `/uploads/${req.file.filename}`, // ✅ fixed path
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Image uploaded",
+      message: "Image uploaded successfully",
       data: newImage,
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-// GET ALL IMAGES
+
+
+// 📋 GET IMAGES (with optional pagination)
 export const getImages = async (req, res) => {
   try {
+    let { page, limit } = req.query;
+
+    if (page && limit) {
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      const images = await Image.find()
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      const total = await Image.countDocuments();
+
+      return res.status(200).json({
+        success: true,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        data: images,
+      });
+    }
+
+    // fallback → return all
     const images = await Image.find().sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: images,
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-// DELETE IMAGE
+
+
+// ❌ DELETE IMAGE (with file cleanup)
 export const deleteImage = async (req, res) => {
   try {
-    const image = await Image.findByIdAndDelete(req.params.id);
+    const image = await Image.findById(req.params.id);
 
     if (!image) {
       return res.status(404).json({
         success: false,
-        message: "Not found",
+        message: "Image not found",
       });
     }
 
-    res.status(200).json({
+    // 🧹 delete file from server
+    if (image.image) {
+      try {
+        fs.unlinkSync(`.${image.image}`);
+      } catch (err) {
+        console.log("File delete error:", err.message);
+      }
+    }
+
+    await image.deleteOne();
+
+    return res.status(200).json({
       success: true,
-      message: "Deleted",
+      message: "Image deleted successfully",
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

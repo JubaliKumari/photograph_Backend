@@ -13,3 +13,4 @@ router.get("/about", getAbout);
 router.delete("/about", deleteAbout);
 
 export default router;
+

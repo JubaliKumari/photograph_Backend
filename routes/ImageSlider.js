@@ -20,3 +20,4 @@ router.put("/:id", updateImage);
 router.delete("/:id", deleteImage);
 
 export default router;
+

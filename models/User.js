@@ -2,15 +2,28 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    username: {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    phone: {
       type: String,
       required: true,
       unique: true,
     },
-    password: {
+    role: {
       type: String,
-      required: true,  
-    },
+      required: true,
+
+    }
   },
   { timestamps: true }
 );

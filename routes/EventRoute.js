@@ -3,7 +3,7 @@ import {
   createEvent,
   getEvents,
   deleteEvent,
-} from "../controllers/eventController.js";
+} from "../controllers/eventController";
 
 import upload from "../middleware/Upload.js";
 const router = express.Router();

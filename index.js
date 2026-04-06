@@ -1,40 +1,46 @@
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
+import cors from "cors"; // ✅ ADD THIS
 
 import db from "./config/db.js";
-import ImageRoute from "./routes/ImageRoute.js";
 import EventRoute from "./routes/EventRoute.js";
 import ImageRoutes from "./routes/ImageRoutes.js";
 import AnoutRoute from "./routes/AboutRoute.js";
+import userRoutes from "./routes/userRoutes.js";
+import ImageSliderRoutes from "./routes/ImageSliderRoute.js";
 
-// ✅ Load env first
 dotenv.config();
 
-// ✅ Create app FIRST
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ✅ ADD THIS (must be before routes)
+app.use(cors({
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"],
+}));
 
 // ✅ Middleware
 app.use(express.json());
 
-// ✅ Static folder for images
+// ✅ Static folder
 app.use("/uploads", express.static("uploads"));
 
 // ✅ Routes
-app.use("/api/images", ImageRoute);
 app.use("/api/events", EventRoute);
 app.use("/api/imageRoutes", ImageRoutes);
 app.use("/api/about", AnoutRoute);
 app.use("/api/users", userRoutes);
-
+app.use("/api/imageSlider", ImageSliderRoutes);
 
 // ✅ Test route
 app.get("/", (req, res) => {
   res.send("API Running 🚀");
 });
 
-// ✅ Start server after DB connection
+// ✅ Start server
 db()
   .then(() => {
     app.listen(PORT, () => {

@@ -1,25 +1,23 @@
 import mongoose from "mongoose";
 
-const ImageSchema = new mongoose.Schema(
+const ImageSliderSchema = new mongoose.Schema(
   {
     heading: {
       type: String,
       required: true,
     },
-
-    description: {   // fixed spelling
+    description: {
       type: String,
       required: true,
     },
-
     image: {
-      type: String,   // store image URL or file path
+      type: String,
       required: true,
     },
   },
   { timestamps: true }
 );
 
-const Image = mongoose.model("Image", ImageSchema);
+const ImageSlider = mongoose.model("ImageSlider", ImageSliderSchema);
 
-export default Image;
+export default ImageSlider;

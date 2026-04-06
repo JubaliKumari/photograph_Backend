@@ -1,90 +1,60 @@
-import Image from "../models/ImageSlider.js";
+import ImageSlider from "../models/ImageSlider.js";
 import fs from "fs";
 
-
-// 📤 CREATE IMAGE
+// 📤 CREATE
 export const createImage = async (req, res) => {
   try {
     const { heading, description } = req.body;
 
-    if (!heading || !description || !req.file) {
+    if (!heading?.trim() || !description?.trim() || !req.file) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
       });
     }
 
-    const newImage = await Image.create({
+    const newImage = await ImageSlider.create({
       heading: heading.trim(),
       description: description.trim(),
-      image: `/uploads/${req.file.filename}`, // ✅ fixed
+      image: `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: "Image created successfully",
       data: newImage,
     });
-
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error creating image",
-      error: error.message,
-    });
-  }
+  console.error("UPLOAD ERROR:", error); // 👈 add this
+  res.status(500).json({
+    success: false,
+    message: error.message,
+  });
+}
 };
 
-
-
-// 📋 GET ALL IMAGES (with optional pagination)
+// 📋 GET ALL
 export const getAllImages = async (req, res) => {
   try {
-    let { page, limit } = req.query;
+    const images = await ImageSlider.find().sort({ createdAt: -1 });
 
-    if (page && limit) {
-      page = parseInt(page);
-      limit = parseInt(limit);
-
-      const images = await Image.find()
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
-
-      const total = await Image.countDocuments();
-
-      return res.status(200).json({
-        success: true,
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-        data: images,
-      });
-    }
-
-    const images = await Image.find().sort({ createdAt: -1 });
-
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       count: images.length,
       data: images,
     });
-
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Error fetching images",
-      error: error.message,
+      message: error.message,
     });
   }
 };
 
-
-
-// 🔍 GET SINGLE IMAGE
+// 🔍 GET SINGLE
 export const getSingleImage = async (req, res) => {
   try {
-    const image = await Image.findById(req.params.id);
+    const image = await ImageSlider.findById(req.params.id);
 
     if (!image) {
       return res.status(404).json({
@@ -93,26 +63,22 @@ export const getSingleImage = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: image,
     });
-
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Error fetching image",
-      error: error.message,
+      message: error.message,
     });
   }
 };
 
-
-
-// ✏️ UPDATE IMAGE (with image replace)
+// ✏️ UPDATE
 export const updateImage = async (req, res) => {
   try {
-    const imageDoc = await Image.findById(req.params.id);
+    const imageDoc = await ImageSlider.findById(req.params.id);
 
     if (!imageDoc) {
       return res.status(404).json({
@@ -126,43 +92,36 @@ export const updateImage = async (req, res) => {
     if (heading) imageDoc.heading = heading.trim();
     if (description) imageDoc.description = description.trim();
 
-    // 🧹 Replace image if new uploaded
     if (req.file) {
-      // delete old image
-      if (imageDoc.image) {
-        try {
-          fs.unlinkSync(`.${imageDoc.image}`);
-        } catch (err) {
-          console.log("Old image delete failed:", err.message);
-        }
+      try {
+        const oldFile = imageDoc.image.split("/uploads/")[1];
+        fs.unlinkSync(`uploads/${oldFile}`);
+      } catch (err) {
+        console.log("Old image delete failed");
       }
 
-      imageDoc.image = `/uploads/${req.file.filename}`;
+      imageDoc.image = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
     }
 
     await imageDoc.save();
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: "Image updated successfully",
+      message: "Updated successfully",
       data: imageDoc,
     });
-
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Error updating image",
-      error: error.message,
+      message: error.message,
     });
   }
 };
 
-
-
-// ❌ DELETE IMAGE (with file cleanup)
+// ❌ DELETE
 export const deleteImage = async (req, res) => {
   try {
-    const image = await Image.findById(req.params.id);
+    const image = await ImageSlider.findById(req.params.id);
 
     if (!image) {
       return res.status(404).json({
@@ -171,27 +130,23 @@ export const deleteImage = async (req, res) => {
       });
     }
 
-    // 🧹 delete file
-    if (image.image) {
-      try {
-        fs.unlinkSync(`.${image.image}`);
-      } catch (err) {
-        console.log("File delete error:", err.message);
-      }
+    try {
+      const oldFile = image.image.split("/uploads/")[1];
+      fs.unlinkSync(`uploads/${oldFile}`);
+    } catch (err) {
+      console.log("Delete file error");
     }
 
     await image.deleteOne();
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: "Image deleted successfully",
+      message: "Deleted successfully",
     });
-
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Error deleting image",
-      error: error.message,
+      message: error.message,
     });
   }
 };

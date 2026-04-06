@@ -1,4 +1,5 @@
-import Image from "../models/Image.js";
+// import Image from "../models/Image.js";
+import Image from "../models/ImageSlider.js";
 import fs from "fs";
 
 

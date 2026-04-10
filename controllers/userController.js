@@ -16,41 +16,59 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 // 🔐 REGISTER USER
 export const createUser = async (req, res) => {
-    try {
-        const { email, password, phone, role } = req.body;
+  try {
+    const { email, password, phone, role } = req.body;
 
-        if (!email || !password || !phone || !role) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = await User.create({
-            email,
-            password: hashedPassword,
-            phone,
-            role,
-        });
-
-        const { password: _, ...userData } = newUser._doc;
-
-        return res.status(201).json({
-            message: "User created successfully",
-            user: userData,
-        });
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Internal Server Error" });
+    // 1. Validation: Check if all fields are provided
+    if (!email || !password || !phone || !role) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-};
 
+    // 2. Check for existing user (Email OR Phone)
+    const existingUser = await User.findOne({ 
+        $or: [{ email }, { phone }] 
+    });
+
+    if (existingUser) {
+      const duplicateField = existingUser.email === email ? "Email" : "Phone number";
+      return res.status(400).json({ 
+        message: `${duplicateField} is already registered. Please use another.` 
+      });
+    }
+
+    // 3. Hash Password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 4. Create User
+    const newUser = await User.create({
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+    });
+
+    // 5. Remove password from response
+    const { password: _, ...userData } = newUser._doc;
+
+    // 6. Generate Token (Optional for register, usually done for login)
+    const token = generateToken(newUser._id);
+
+    return res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: userData,
+      token
+    });
+
+  } catch (error) {
+    console.error("CREATE USER ERROR:", error);
+    return res.status(500).json({ 
+      message: "Internal Server Error", 
+      error: error.message 
+    });
+  }
+};
 
 
 // 🔑 LOGIN USER

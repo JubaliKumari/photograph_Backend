@@ -9,6 +9,11 @@ import ImageRoutes from "./routes/ImageRoutes.js";
 import AnoutRoute from "./routes/AboutRoute.js";
 import userRoutes from "./routes/userRoutes.js";
 import ImageSliderRoutes from "./routes/ImageSliderRoute.js";
+import ProductRoutes from "./routes/ProductRotues.js";
+import LifestyleRoutes from "./routes/LifestyleRoutes.js";
+import PortraitRoutes from "./routes/PortraitRoutes.js";
+import TravellingRoute from "./routes/TravellingRoute.js";
+
 
 dotenv.config();
 
@@ -34,7 +39,10 @@ app.use("/api/imageRoutes", ImageRoutes);
 app.use("/api/about", AnoutRoute);
 app.use("/api/users", userRoutes);
 app.use("/api/imageSlider", ImageSliderRoutes);
-
+app.use("/api/products", ProductRoutes);
+app.use("/api/lifestyle", LifestyleRoutes);
+app.use("/api/portrait", PortraitRoutes);
+app.use("/api/travelling", TravellingRoute);
 // ✅ Test route
 app.get("/", (req, res) => {
   res.send("API Running 🚀");

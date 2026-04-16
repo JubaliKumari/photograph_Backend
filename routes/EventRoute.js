@@ -10,7 +10,7 @@ import upload from "../middleware/Upload.js";
 const router = express.Router();
 
 // ✅ ONLY ONE CREATE ROUTE
-router.post("/", upload.single("image"), createEvent);
+router.post("/createEvent", upload.single("image"), createEvent);
 
 // ✅ Get Events
 router.get("/", getEvents);
